@@ -173,6 +173,9 @@ class gsa_data_fetch:
             on='BioSample',
             how='left'
         )
+        df['FTP_path'] = df['FTP_path'].str.replace(
+            'ftp://download.big.ac.cn', 'https://download.cncb.ac.cn', regex=False
+        )
             
         df.to_csv(f'{self.output_dir}/gsa_runinfo.tsv', sep='\t', header=True, index=False, float_format='%.2f')
         logging.info('Done!')
