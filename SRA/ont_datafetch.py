@@ -29,7 +29,7 @@ class ONTDataFetch:
             logging.info("All required commands are available. Checking taxonomy database...")
         required_files = ['names.dmp', 'nodes.dmp', 'delnodes.dmp', 'merged.dmp']
         for required_file in required_files:
-            if not os.path.exists(f'~/.taxonkit/{required_file}'):
+            if not os.path.exists(os.path.expanduser(f'~/.taxonkit/{required_file}')):
                 logging.info('Missing taxonkit database, downloading...')
                 os.makedirs('~/.taxonkit', exist_ok=True)
                 cmd = 'cd ~/.taxonkit && wget https://ftp.ncbi.nih.gov/pub/taxonomy/taxdump.tar.gz && tar -zxvf taxdump.tar.gz && cd -'
@@ -51,7 +51,7 @@ class ONTDataFetch:
             # Fetch SRA data using esearch and efetch
             # We need ONT data, but not RNA data, and exclude certain organisms to accelerate the search
             # If you are adding new runs, please change PDAT to a more recent date
-            cmd = f'esearch -db sra -query "Oxford Nanopore [Platform] NOT rna data [Filter] NOT coronavirus [Organism] NOT metagenome [Organism] NOT Escherichia coli [Organism] AND 2000/01/01:3000/12/31[PDAT]" | efetch -format runinfo > {self.output_dir}/sra_runinfo.txt'
+            cmd = f'esearch -db sra -query "Oxford Nanopore [Platform] NOT rna data [Filter] NOT coronavirus [Organism] NOT metagenome [Organism] NOT Escherichia coli [Organism] AND 2000/01/01:3000/12/31[PDAT]" | efetch -format runinfo > ./sra_runinfo.txt'
             # self.step_info.update({'fetchsra': True if os.system(cmd)==0 else False}) # Use subprocess for better error handling
             result = subprocess.run(cmd, shell=True, check=True, capture_output=True, text=True)
             if result.returncode == 0:
