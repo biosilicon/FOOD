@@ -43,7 +43,7 @@ class ONTDataFetch:
 
     def fetchsra(self) -> None:
         # Check if output file exists and handle overwrite
-        if os.path.exists(f'{self.output_dir}/sra_runinfo.txt') and not self.overwrite:
+        if os.path.exists(f'./sra_runinfo.txt') and not self.overwrite:
             logging.info("SRA runinfo file already exists and overwrite is set to False. Skipping fetch.")
             return
         # Ensure output directory exists
@@ -51,7 +51,7 @@ class ONTDataFetch:
             # Fetch SRA data using esearch and efetch
             # We need ONT data, but not RNA data, and exclude certain organisms to accelerate the search
             # If you are adding new runs, please change PDAT to a more recent date
-            cmd = f'esearch -db sra -query "Oxford Nanopore [Platform] NOT rna data [Filter] NOT coronavirus [Organism] NOT metagenome [Organism] NOT Escherichia coli [Organism] AND 2000/01/01:3000/12/31[PDAT]" | efetch -format runinfo > ./sra_runinfo.txt'
+            cmd = f'esearch -db sra -query "Oxford Nanopore [Platform] NOT rna data [Filter] NOT coronavirus [Organism] NOT metagenome [Organism] NOT Escherichia coli [Organism] AND 2025/10/22:3000/12/31[PDAT]" | efetch -format runinfo > ./sra_runinfo.txt'
             # self.step_info.update({'fetchsra': True if os.system(cmd)==0 else False}) # Use subprocess for better error handling
             result = subprocess.run(cmd, shell=True, check=True, capture_output=True, text=True)
             if result.returncode == 0:
@@ -175,12 +175,13 @@ class ONTDataFetch:
             df = df[~df['Tissue'].str.contains('culture|lympho', case=False, na=False)]
             df = df[~df['BioProject'].isin(['PRJEB66174', 'PRJNA740254', 'PRJNA1146547'])]
             return df
-        df = pd.read_csv(f'{self.output_dir}/sra_runinfo.txt', sep=",", header=0, index_col=None, low_memory=False)
+        
+        df = pd.read_csv(f'./sra_runinfo.txt', sep=",", header=0, index_col=None, low_memory=False)
         df = pre_filter(df)
         df = taxon_filter(df)
         df = get_biosample_info(df)
-        df.to_csv(f'{self.output_dir}/sra_runinfo_filtered.tsv', sep='\t', index=False, header=True, float_format='%.0f')
-        logging.info(f"Filtered data saved to {self.output_dir}/sra_runinfo_filtered.tsv")
+        df.to_csv(f'./sra_runinfo_filtered.tsv', sep='\t', index=False, header=True, float_format='%.0f')
+        logging.info(f"Filtered data saved to ./sra_runinfo_filtered.tsv")
         return df
 
     def addrawformat(self, df:pd.DataFrame) -> pd.DataFrame:
@@ -212,23 +213,23 @@ class ONTDataFetch:
             except:
                 logging.warning(f"Warning: No raw format found for {run_id}")
                 df.loc[df['Run'] == run_id, 'Raw_Data_Format'] = None
-        df.to_csv(f'{self.output_dir}/sra_runinfo_filtered_with_rawformat.tsv', sep='\t', index=False, header=True, float_format='%.0f')
+        df.to_csv(f'./sra_runinfo_filtered_with_rawformat.tsv', sep='\t', index=False, header=True, float_format='%.0f')
         logging.info(f"Data with raw format saved to {self.output_dir}/sra_runinfo_filtered_with_rawformat.tsv")
         return df
         
     def assignref(self) -> pd.DataFrame:
         genbank_url = 'https://ftp.ncbi.nlm.nih.gov/genomes/ASSEMBLY_REPORTS/assembly_summary_genbank.txt'
         # Download GenBank assembly summary
-        if not os.path.exists(f'{self.output_dir}/assembly_summary_genbank.txt') or self.overwrite:
+        if not os.path.exists(f'./assembly_summary_genbank.txt') or self.overwrite:
             try:
                 df = pd.read_csv(genbank_url, sep='\t', header=1, index_col=None, low_memory=False)
-                df.to_csv(f'{self.output_dir}/assembly_summary_genbank.txt', sep='\t', header=True, index=False)
+                df.to_csv(f'./assembly_summary_genbank.txt', sep='\t', header=True, index=False)
                 logging.info("GenBank assembly summary downloaded successfully.")
             except Exception as e:
                 raise RuntimeError(f"Failed to download GenBank assembly summary: {str(e)}") from e
         else:
             logging.info("GenBank assembly summary already exists and overwrite is set to False. Loading existing file.")
-            df = pd.read_csv(f'{self.output_dir}/assembly_summary_genbank.txt', sep='\t', header=0, index_col=None, low_memory=False)
+            df = pd.read_csv(f'./assembly_summary_genbank.txt', sep='\t', header=1, index_col=None, low_memory=False)
         return df
     
     def integrate(self, df:pd.DataFrame) -> pd.DataFrame:
@@ -324,7 +325,7 @@ class ONTDataFetch:
         df = rearrange(df)
         df_info = self.assignref()
         df = addrefinfo(df, df_info)
-        df.to_csv(f'{self.output_dir}/sra_runinfo_integrated.tsv', sep='\t', index=False, header=True, float_format='%.2f')
+        df.to_csv(f'./sra_runinfo_integrated.tsv', sep='\t', index=False, header=True, float_format='%.2f')
         logging.info(f"Integrated data saved to {self.output_dir}/sra_runinfo_integrated.tsv")
 
     def process_data(self):
